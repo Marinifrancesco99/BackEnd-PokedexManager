@@ -1,13 +1,14 @@
 package com.marini.controller;
 
-import com.marini.dao.UsersDao;
 import com.marini.model.Users;
+import com.marini.service.UsersService;
 
 import io.javalin.Javalin;
+import io.javalin.http.HttpStatus;
 
 public class UsersController {
 
-    private static UsersDao userDao = new UsersDao();
+    private static UsersService usersService = new UsersService();
     private String apiVersionV1 = "/api/v1";
 
     // Definisci il gestore per il login separatamente
@@ -17,14 +18,15 @@ public class UsersController {
         String password = ctx.formParam("password");
 
         // Verifica le credenziali usando UsersDao
-        Users user = userDao.getUserByusername(username);
-
+        Users user = usersService.getUserByusername(username);
         if (user != null && user.getPassword().equals(password)) {
             // Salva l'utente nella sessione
             ctx.sessionAttribute("id_user", user.getId_user());
             ctx.result("Login effettuato con successo!");
+        } else if (user == null) {
+            ctx.status(HttpStatus.NOT_FOUND).json("Utente non trovato.");
         } else {
-            ctx.status(401).result("Credenziali errate.");
+            ctx.status(HttpStatus.UNAUTHORIZED).json("Credenziali errate.");
         }
     };
 
