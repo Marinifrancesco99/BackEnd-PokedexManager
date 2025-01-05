@@ -15,4 +15,9 @@ public class PokedexService {
     public List<Pokemon> getAllPokedexPokemon (int userId) {
         return pokedexDao.getAllPokedexPokemon(userId);
     } 
+
+
+    public boolean removeFromPokedex(int national_number, int userId) {
+        return pokedexDao.removeFromPokedex(national_number, userId);
+    }
 }

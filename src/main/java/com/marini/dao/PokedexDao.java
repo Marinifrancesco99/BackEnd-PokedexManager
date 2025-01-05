@@ -118,4 +118,39 @@ public class PokedexDao {
         return pokedex;
     }
 
+    public boolean removeFromPokedex(int national_number, int userId) {
+        // SQL per verificare se il Pokémon è presente nella pokedex dell'utente
+        String checkPokedexExistsSQL = "SELECT * FROM pokedex WHERE national_number = ? AND id_user = ?"; // Usa id_user
+                                                                                                          // qui
+
+        // SQL per rimuovere il Pokémon dalla pokedex
+        String deleteFromPokedexSQL = "DELETE FROM pokedex WHERE national_number = ? AND id_user = ?"; // Usa id_user
+                                                                                                       // qui
+
+        try {
+            // Verifica se il Pokémon è presente nella pokedex dell'utente
+            PreparedStatement checkPokedexExistsStmt = connection.prepareStatement(checkPokedexExistsSQL);
+            checkPokedexExistsStmt.setInt(1, national_number);
+            checkPokedexExistsStmt.setInt(2, userId);
+            ResultSet pokedexResult = checkPokedexExistsStmt.executeQuery();
+
+            // Se il Pokémon non è nella pokedex, ritorna false
+            if (!pokedexResult.next()) {
+                return false;
+            }
+
+            // Rimuovi il Pokémon dalla pokedex dell'utente
+            PreparedStatement deleteFromPokedexStmt = connection.prepareStatement(deleteFromPokedexSQL);
+            deleteFromPokedexStmt.setInt(1, national_number);
+            deleteFromPokedexStmt.setInt(2, userId);
+            int rowsAffected = deleteFromPokedexStmt.executeUpdate();
+
+            return rowsAffected > 0;
+
+        } catch (SQLException e) {
+            // Gestione delle eccezioni SQL
+            throw new RuntimeException("Errore durante la rimozione del Pokémon dalla pokedex", e);
+        }
+    }
+
 }

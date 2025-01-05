@@ -36,10 +36,10 @@ public class PokemonController {
             }
 
             // Converte l'ID utente in un int per proseguire dopo aver visto se era null.
-            //int id = userId;
+            // int id = userId;
 
             List<Pokemon> pokemons = pokemonService.getAllPokemon();
-            
+
             ctx.json(pokemons);
 
         });
@@ -67,41 +67,39 @@ public class PokemonController {
 
         });
 
-
         // Rotta per aggiungere pokemon alla Pokedex
         app.post(apiVersionV1 + "/protected/pokedex/{national_number}", ctx -> {
             Integer userId = ctx.attribute("userId");
-        
+
             if (userId == null) {
                 ctx.status(HttpStatus.UNAUTHORIZED).json(Map.of("error", "Accesso non autorizzato."));
                 return;
             }
-        
+
             try {
                 int national_number = Integer.parseInt(ctx.pathParam("national_number"));
-        
+
                 // Passa anche l'ID utente al servizio
                 boolean added = pokedexService.addToPokedex(national_number, userId);
-        
+
                 if (added) {
                     ctx.status(HttpStatus.CREATED).json(Map.of(
-                        "message", "Pokemon aggiunto alla pokedex con successo.",
-                        "national_number", national_number));
+                            "message", "Pokemon aggiunto alla pokedex con successo.",
+                            "national_number", national_number));
                 } else {
                     ctx.status(HttpStatus.BAD_REQUEST).json(Map.of(
-                        "error", "Impossibile aggiungere il Pokemon. Potrebbe non esistere o essere già nella pokedex."));
+                            "error",
+                            "Impossibile aggiungere il Pokemon. Potrebbe non esistere o essere già nella pokedex."));
                 }
-        
+
             } catch (NumberFormatException e) {
                 ctx.status(HttpStatus.BAD_REQUEST).json(Map.of("error", "National number non valido."));
             } catch (Exception e) {
                 ctx.status(HttpStatus.INTERNAL_SERVER_ERROR).json(Map.of(
-                    "error", "Errore durante l'aggiunta del Pokemon alla pokedex.",
-                    "details", e.getMessage()));
+                        "error", "Errore durante l'aggiunta del Pokemon alla pokedex.",
+                        "details", e.getMessage()));
             }
         });
-        
-
 
         // Rotta per vedere i pokemon presenti nella pokedex
         app.get(apiVersionV1 + "/protected/pokedex", ctx -> {
@@ -116,6 +114,44 @@ public class PokemonController {
 
             ctx.json(pokemons);
         });
+
+
+
+            // Rotta per rimuovere un pokemon dalla Pokedex
+    app.delete(apiVersionV1+"/protected/pokedex/{national_number}",ctx->
+
+    {
+    Integer userId = ctx.attribute("userId");
+
+    if (userId == null) {
+        ctx.status(HttpStatus.UNAUTHORIZED).json(Map.of("error", "Accesso non autorizzato."));
+        return;
+    }
+
+    try {
+        // Recupera il numero nazionale del Pokémon dalla URL
+        int national_number = Integer.parseInt(ctx.pathParam("national_number"));
+
+        // Passa l'ID utente e il numero nazionale del Pokémon al servizio per la rimozione
+        boolean deleted = pokedexService.removeFromPokedex(national_number, userId);
+
+        if (deleted) {
+            ctx.status(HttpStatus.OK).json(Map.of(
+                    "message", "Pokemon rimosso dalla pokedex con successo.",
+                    "national_number", national_number));
+        } else {
+            ctx.status(HttpStatus.BAD_REQUEST).json(Map.of(
+                    "error", "Impossibile rimuovere il Pokemon. Potrebbe non essere presente nella pokedex."));
+        }
+
+    } catch (NumberFormatException e) {
+        ctx.status(HttpStatus.BAD_REQUEST).json(Map.of("error", "National number non valido."));
+    } catch (Exception e) {
+        ctx.status(HttpStatus.INTERNAL_SERVER_ERROR).json(Map.of(
+                "error", "Errore durante la rimozione del Pokemon dalla pokedex.",
+                "details", e.getMessage()));
+    }
+});
 
     }
 
