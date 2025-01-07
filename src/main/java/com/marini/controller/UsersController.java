@@ -38,8 +38,54 @@ public class UsersController {
         }
     };
 
+    // Registrazione Utente
+    private static io.javalin.http.Handler register = ctx -> {
+        // Recupera i dati dal corpo della richiesta
+        String username = ctx.formParam("username");
+        String email = ctx.formParam("email");
+        String password = ctx.formParam("password");
+
+        // Verifica che tutti i campi siano forniti
+        if (username == null || email == null || password == null) {
+            ctx.status(400).json(Map.of("error", "Tutti i campi sono obbligatori."));
+            return;
+        }
+
+        // Controlla se l'utente esiste già
+        Users existingUser = usersService.getUserByusername(username);
+        if (existingUser != null) {
+            ctx.status(409).json(Map.of("error", "Username già in uso."));
+            return;
+        }
+
+        // Crea un nuovo utente
+        Users newUser = new Users(0, username, email, password);
+
+        // Salva il nuovo utente nel database
+        boolean success = usersService.createUser(newUser);
+        if (success) {
+            ctx.status(201).json(Map.of("message", "Registrazione avvenuta con successo!"));
+        } else {
+            ctx.status(500).json(Map.of("error", "Errore durante la registrazione."));
+        }
+    };
+
     // Metodo per registrare le rotte
     public void registerRoutes(Javalin app) {
         app.post(apiVersionV1 + "/login", login); // Usa l'handler login definito precedentemente
+        app.post(apiVersionV1 + "/register", register);
+        app.delete(apiVersionV1 + "/users/{id}", ctx -> {
+            int id = Integer.parseInt(ctx.pathParam("id"));
+            UsersService usersService = new UsersService();
+            boolean isDeleted = usersService.deleteUser(id);
+
+            if (isDeleted) {
+                ctx.status(200).result("Utente eliminato con successo.");
+            } else {
+                ctx.status(404).result("Utente non trovato o non eliminabile.");
+            }
+        });
+
     }
+
 }
